@@ -15,9 +15,7 @@ async function create_index(property) {
 // create_index("title").then(console.log).finally(() => client.close())
 // create_index("author").then(console.log).finally(() => client.close())
 // create_index("publicationYear").then(console.log).finally(() => client.close())
-// create_index("averageRating").then(console.log).finally(() => client.close())
 // create_index("genre").then(console.log).finally(() => client.close())
-// create_index("pageCount").then(console.log).finally(() => client.close())
 
 
 async function create_book(book_data) {
@@ -114,7 +112,7 @@ async function search_by_date_range(firstYear, lastYear) {
 //     .catch(console.error)
 //     .finally(()=> client.close())
 
-async function topSort(length) {
+async function top_sort(length) {
     const allBooks = await books.find().toArray()
     function compare(a, b) {
         if (a.averageRating > b.averageRating) {
@@ -130,7 +128,7 @@ async function topSort(length) {
     return results
 }
 
-// topSort(10)
+// top_sort(10)
 //     .then(console.log)
 //     .catch(console.error)
 //     .finally(()=> client.close())
@@ -168,18 +166,44 @@ async function page_count_by_genre(genre) {
 async function most_books(property) {
     const allBooks = books.find().toArray();
     const bookMap = new Map();
+    let topProp = '';
+    let total = 0;
     (await allBooks).forEach((book) => {
-        const key = book.property;
+        const key = book[property];
         if (bookMap.has(key)) {
             bookMap.set(key, bookMap.get(key) + 1);
+            if (bookMap.get(key) > total) {
+                total = bookMap.get(key)
+                topProp = key
+            }
         } else {
             bookMap.set(key, 1);
         }
     })
-    return bookMap
+    return {topProp, total}
 }
 
-most_books("author")
-    .then(console.log)
-    .catch(console.error)
-    .finally(()=> client.close())
+// most_books("author")
+//     .then(console.log)
+//     .catch(console.error)
+//     .finally(()=> client.close())
+
+async function average_by_year(firstYear, lastYear) {
+    const allBooks = books.find().toArray();
+    const results = (await allBooks).filter((book) => 
+        book.publicationYear >= firstYear &&
+        book.publicationYear <= lastYear
+    );
+    let total = 0;
+    let numBooks = results.length;
+    results.forEach((book) => {
+        total += book.averageRating
+    })
+    const averageAverage = total/numBooks;
+    return Math.round(averageAverage * 100) / 100
+}
+
+// average_by_year(2010, 2026)
+//     .then(console.log)
+//     .catch(console.error)
+//     .finally(()=> client.close())
